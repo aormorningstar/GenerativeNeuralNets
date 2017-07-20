@@ -35,13 +35,13 @@ sampFileName = None
 lR = 0.001
 lRPT = 0.005
 # number of epochs
-nE = 6000
-nEPT = 2000
+nE = 20
+nEPT = 20
 # number of Markov chain steps for equilibrating to visibles
 nS = 10
 # k value for CDk or pCD
-k  = 10
-kPT = 10
+k  = 5
+kPT = 5
 # batch size
 bS = 100
 # L1 regularization rate

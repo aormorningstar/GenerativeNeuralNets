@@ -33,28 +33,28 @@ class dbn(dgm):
         for i in range(self.nHL):
             print('rbm ',i+1,' of ',self.nHL)
             # initialize stack of rbms (k=1 for all but last rbm)
-            rbm = rbm(self.net[i:i+2],self.T,lR,k,self.bS,nE,self.l1R,self.d,roll=False)
+            RBM = rbm(self.net[i:i+2],self.T,lR,k,self.bS,nE,self.l1R,self.d,roll=False)
             if i == 0 and self.roll:
-                rbm.roll = True
+                RBM.roll = True
 
             # load training data for this layer
-            rbm.loadData(tData)
+            RBM.loadData(tData)
 
             # train this layer's rbm
-            rbm.train(method)
+            RBM.train(method)
 
             # produce training data for next rbm
-            tData = rbm.compressedData()
+            tData = RBM.compressedData()
 
             # update weights of dbn
-            self.w[i] = rbm.w[0]
-            self.wR[i] = rbm.w[0]
-            self.b[i] = rbm.b[0]
-            self.bR[i+1] = rbm.b[1]
+            self.w[i] = RBM.w[0]
+            self.wR[i] = RBM.w[0]
+            self.b[i] = RBM.b[0]
+            self.bR[i+1] = RBM.b[1]
             if i == 0:
-                self.bR[i] = rbm.b[0]
+                self.bR[i] = RBM.b[0]
             if i == (self.nHL-1):
-                self.b[i+1] = rbm.b[1]
+                self.b[i+1] = RBM.b[1]
 
     # fine tune the dbn network with wake-sleep
     def train(self):

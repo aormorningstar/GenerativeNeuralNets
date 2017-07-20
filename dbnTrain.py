@@ -33,10 +33,10 @@ sampFileName = None
 # training parameters
 lRPT = 0.002 # learning rate
 lR = 0.0002
-nEPT = 4000 # number of epochs
-nE = 4000
-kPT = 10 # k value for CDk or pCD
-k = 10
+nEPT = 20 # number of epochs
+nE = 20
+kPT = 2 # k value for CDk or pCD
+k = 2
 bS = 100 # batch size
 method = "CDk" # training method
 l1R = 0.0 # L1 regularization
