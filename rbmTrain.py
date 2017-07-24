@@ -1,10 +1,10 @@
-# dbnTrain.py
-# source code for training a dbn
+# rbmTrain.py
+# source code for training an rbm
 # Alan Morningstar
-# February 2017
+# July 2017
 
 
-from dbn import dbn
+from rbm import rbm
 import sys
 
 
@@ -25,17 +25,14 @@ for n in nHstr:
     nHListStr += '_'+n
 nHListStr = nHListStr[1:]
 
-nameBase = '_N=' + Nstr + '_nH=' + nHListStr + '_T=' + Tstr + '_dbn'
+nameBase = '_N=' + Nstr + '_nH=' + nHListStr + '_T=' + Tstr + '_rbm'
 measurementFileName = 'meas' + nameBase + '.csv'
 sampFileName = None
 
 # training parameters
-lRPT = 0.002 # learning rate
-lR = 0.0002
-nEPT = 20 # number of epochs
-nE = 20
-kPT = 2 # k value for CDk or pCD
-k = 2
+lR = 0.001
+nE = 100
+k = 5
 bS = 100 # batch size
 method = "CDk" # training method
 
@@ -46,15 +43,12 @@ numCycles = 1000
 # main training function
 def main():
     # initialize model
-    model = dbn(net,T,lR,k,bS,nE,roll=True)
+    model = rbm(net,T,lR,k,bS,nE,roll=True)
 
     # load data
     model.loadData(dataFileName)
 
-    # train
-    model.preTrain(lRPT,kPT,nEPT,method)
-
-    # fine tune
+    # train model
     model.train()
 
     # generate samples and measure, write to file

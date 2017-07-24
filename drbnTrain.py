@@ -25,7 +25,7 @@ for n in nHstr:
     nHListStr += '_'+n
 nHListStr = nHListStr[1:]
 
-nameBase = '_N=' + nVstr + '_nH=' + nHListStr + '_T=' + Tstr
+nameBase = '_N=' + nVstr + '_nH=' + nHListStr + '_T=' + Tstr + '_drbn'
 measurementFileName = 'meas' + nameBase + '.csv'
 sampFileName = None
 
@@ -49,19 +49,19 @@ nCycles = 1000
 
 # main training function
 def main():
-    # initialize drbn
+    # initialize model
     model = drbn.drbn(net,T,lR,k,bS,nE,roll=True)
 
     # load data
     model.loadData(dataFileName)
 
-    # pre-train with dbn
+    # pre-train
     model.preTrain(lRPT,kPT,nEPT,methodPT)
 
-    # train drbn
+    # train
     model.train(method)
 
-    # measurements on drbn samples
+    # measurements on model samples
     sampleVisibles = model.sample(nSamples,nCycles)
     model.measure(sampleVisibles,measurementFileName)
 

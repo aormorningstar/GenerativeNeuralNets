@@ -6,8 +6,6 @@
 
 from dbm import dbm
 import sys
-import matplotlib.pyplot as plt
-import numpy as np
 
 
 # inputs
@@ -28,7 +26,7 @@ for n in nHstr:
     nHListStr += '_'+n
 nHListStr = nHListStr[1:]
 
-nameBase = '_N=' + nVstr + '_nH=' + nHListStr + '_T=' + Tstr
+nameBase = '_N=' + nVstr + '_nH=' + nHListStr + '_T=' + Tstr + '_dbm'
 measurementFileName = 'meas' + nameBase + '.csv'
 sampFileName = None
 
@@ -54,7 +52,7 @@ nCycles = 1000
 
 # main training function
 def main():
-    # initialize deep Boltzmann machine
+    # initialize model
     model = dbm(net,T,lR,nS,k,bS,nE,l1R,dim,roll=True)
 
     # load data
@@ -66,7 +64,7 @@ def main():
     # train dbm
     model.train(method)
 
-    # measurements on dbm samples
+    # measurements on model samples
     samples = model.sample(nSamples,nCycles)
     model.measure(samples,measurementFileName)
 
