@@ -1,19 +1,21 @@
 # dataset.py
-# source code for a dataset object containing d=1 or d=2 Ising model data
+# source code for a dataset object containing 2D Ising model data
 # Alan Morningstar
 # March 2017
+
 
 import numpy as np
 import pandas as pd
 
+
 # a dataset
 class dataset(object):
+
     # initialize dataset
-    def __init__(self,bS,d,T,roll=False):
+    def __init__(self,bS,T,roll=False):
+
         # temperature of Ising model data
         self.T = T
-        # dimension of lattice
-        self.d = d
         # training data
         self.data = None
         # number of training samples
@@ -29,8 +31,10 @@ class dataset(object):
         # translationally invariant data?
         self.roll = roll
 
+
     # load training data from file or array
     def loadData(self,dataFileOrArray):
+
         if isinstance(dataFileOrArray,str):
             # load data
             self.data = pd.read_csv(dataFileOrArray,sep=',',header=None).values.astype(int)
@@ -43,32 +47,34 @@ class dataset(object):
         # set how many batches are in the data
         self.nB = self.nTS//self.bS
 
+
     # shuffle the training data
     def shuffleData(self):
+
         # shuffle list of data indices
         shuffledIndices = np.random.choice(self.nTS,self.nTS,replace=False)
         self.data = self.data[shuffledIndices,:]
 
+
     # shift the training data columns consistently with PBC of lattice, also conjugate spins of half the data
     def rollData(self):
+
         # roll data columns
-        if self.d == 2:
-            L = int(np.sqrt(self.N))
-            r = np.random.randint(L)
-            # assume a square lattice
-            for i in range(L):
-                self.data[:,i*L:(i+1)*L] = np.roll(self.data[:,i*L:(i+1)*L],r,1)
-        elif self.d == 1:
-            L = self.N
-            r = np.random.randint(L)
-            self.data = np.roll(self.data,r,1)
+        L = int(np.sqrt(self.N))
+        r = np.random.randint(L)
+
+        # assume a square lattice
+        for i in range(L):
+            self.data[:,i*L:(i+1)*L] = np.roll(self.data[:,i*L:(i+1)*L],r,1)
 
         # conjugate spins of half the data
         conjugatedSamples = np.random.choice(self.nTS,self.nTS//2,replace=False)
         self.data[conjugatedSamples,:] = 1-self.data[conjugatedSamples,:]
 
+
     # allocate new data to the batch
     def newBatch(self):
+
         if self.batchIndex < (self.nB-1):
             # push batch index to next
             self.batchIndex += 1

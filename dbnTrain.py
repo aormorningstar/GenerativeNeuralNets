@@ -3,11 +3,12 @@
 # Alan Morningstar
 # February 2017
 
+
 from dbn import dbn
 import sys
-from dbm import dbm
 from utils import neuron
 import numpy as np
+
 
 # inputs
 args = sys.argv[1:]
@@ -39,8 +40,6 @@ kPT = 2 # k value for CDk or pCD
 k = 2
 bS = 100 # batch size
 method = "CDk" # training method
-l1R = 0.0 # L1 regularization
-dim = 2 # dimension of Ising model lattice
 
 # sample rbm
 numSamples = 10000
@@ -49,7 +48,7 @@ numCycles = 1000
 # main training function
 def main():
     # initialize deep belief network
-    model = dbn(net,T,lR,k,bS,nE,l1R,dim)
+    model = dbn(net,T,lR,k,bS,nE,roll=True)
 
     # load data
     model.loadData(dataFileName)

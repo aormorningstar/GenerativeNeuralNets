@@ -3,6 +3,7 @@
 # Alan Morningstar
 # March 2017
 
+
 import numpy as np
 import pandas as pd
 from dgm import dgm
@@ -11,29 +12,37 @@ from utils import neuron
 from utils import sigmoid
 import copy
 
+
 # a deep belief network
 class dbn(dgm):
+
     # initialize dbn
-    def __init__(self,net,T,lR,k,bS,nE,l1R=0.0,d=2,roll=False):
+    def __init__(self,net,T,lR,k,bS,nE,roll=False):
+
         # initialize deep generative model framework
-        dgm.__init__(self,net,T,lR,k,bS,nE,l1R,d,roll)
+        dgm.__init__(self,net,T,lR,k,bS,nE,roll)
 
         # recognition weights and biases for compression
         self.wR = copy.deepcopy(self.w)
         self.bR = copy.deepcopy(self.b)
 
+
     # layer-wise training of the dbn
     def preTrain(self,lR,k,nE,method):
         # method: 'pCD' or 'CDk'
+
         print('----------------------------------')
         print('Training...')
 
         # training data for stack of rbms (layer by layer)
         tData = copy.deepcopy(self.data)
+
         for i in range(self.nHL):
+
             print('rbm ',i+1,' of ',self.nHL)
             # initialize stack of rbms (k=1 for all but last rbm)
-            RBM = rbm(self.net[i:i+2],self.T,lR,k,self.bS,nE,self.l1R,self.d,roll=False)
+            RBM = rbm(self.net[i:i+2],self.T,lR,k,self.bS,nE,roll=False)
+
             if i == 0 and self.roll:
                 RBM.roll = True
 
@@ -51,13 +60,16 @@ class dbn(dgm):
             self.wR[i] = RBM.w[0]
             self.b[i] = RBM.b[0]
             self.bR[i+1] = RBM.b[1]
+
             if i == 0:
                 self.bR[i] = RBM.b[0]
             if i == (self.nHL-1):
                 self.b[i+1] = RBM.b[1]
 
+
     # fine tune the dbn network with wake-sleep
     def train(self):
+
         print('----------------------------------')
         print('Fine tuning...')
 
@@ -67,11 +79,13 @@ class dbn(dgm):
         sleepState = [np.random.randint(0,2,(self.bS,self.net[i])) for i in range(self.nL)]
 
         for e in range(self.nE):
+
             if (e+1)%10==0:
                 print('----------------------------------')
                 print("epoch ",e+1," of ",self.nE)
 
             for b in range(self.nB):
+
                 # set new batch of data
                 self.newBatch()
                 wakeState[0] = self.batch
@@ -100,10 +114,13 @@ class dbn(dgm):
                 sleepState[-2] = neuron( np.dot(sleepState[-1],self.w[-1].transpose()) + self.b[-2] )
                 self.sleepUpdate(wakeState,sleepState)
 
+
     # wake phase
     def wakeUpdate(self,wakeState,sleepState):
+
         # run upwards over all but the last layer in the network
         for i in range(1,self.nHL):
+
             # upards inference
             wakeState[i] = neuron( np.dot(wakeState[i-1],self.wR[i-1]) + self.bR[i] )
             # reconstruction
@@ -115,10 +132,13 @@ class dbn(dgm):
             # update generative biases
             self.b[i-1] += (self.lR/self.bS) * np.sum(wakeState[i-1]-sleepState[i-1],axis=0)
 
+
     # sleep phase
     def sleepUpdate(self,wakeState,sleepState):
+
         # run downwards over layers in the network
         for i in range(self.nHL,1,-1):
+
             # downwards inference
             sleepState[i-1] = neuron( np.dot(sleepState[i],self.w[i-1].transpose()) + self.b[i-1] )
             # reconstruction
@@ -130,10 +150,13 @@ class dbn(dgm):
             # update recognition biases
             self.bR[i] += (self.lR/self.bS) * np.sum(sleepState[i]-wakeState[i],axis=0)
 
-    # generate samples of the dbn
+
+    # generate samples of the dbn visible layer
     def sample(self,nSamples,nCycles):
+
         print('----------------------------------')
         print('Sampling dbn...')
+
         # initialize state of sample dgm
         sampleDgm = [np.random.randint(0,2,(nSamples,self.net[i])) for i in range(self.nL)]
 
@@ -149,8 +172,10 @@ class dbn(dgm):
         # return equilibrium samples
         return sampleDgm[0]
 
-    # use the dbn as a map from the input space of data to a reduced space at the last layer
+
+    # use the dbn as a map from the input space of data to a hidden space at the last layer
     def compressedData(self,dataArray,compressedDataFileName = None):
+
         # data container for compression
         compressDgm = [np.zeros((dataArray.shape[0],self.net[i])) for i in range(self.nL)]
         compressDgm[0] = dataArray

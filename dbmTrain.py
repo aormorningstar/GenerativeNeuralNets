@@ -3,10 +3,12 @@
 # Alan Morningstar
 # March 2017
 
+
 from dbm import dbm
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
+
 
 # inputs
 args = sys.argv[1:]
@@ -16,7 +18,6 @@ nHstr = netStr[1:]
 Tstr = args[-1]
 dataFileName = '/Users/aormorningstar/Documents/PSI/Essay/data/data_N=' + nVstr + '/states_T=' + Tstr + '.csv'
 #dataFileName = '/Users/aormorningstar/Documents/PSI/Essay/data/data_N=' + nVstr + '/states_N='+nVstr+'_T=' + Tstr + '.csv'
-#dataFileName = '/Users/aormorningstar/Documents/PSI/Essay/data/data_1D_N=' + nVstr + '/states_N=' + nVstr + '_T=' + Tstr + '.csv'
 
 net = [int(n) for n in netStr]
 T = float(Tstr)
@@ -44,12 +45,8 @@ k  = 5
 kPT = 5
 # batch size
 bS = 100
-# L1 regularization rate
-l1R = 0.0
 # method
 method = 'CDk'
-# dimension of lattice
-dim = 2
 
 # sampling parameters
 nSamples = 10000
@@ -65,11 +62,12 @@ def main():
 
     # pre-train
     model.preTrain(lRPT,kPT,nEPT,method)
+
     # train dbm
     model.train(method)
 
     # measurements on dbm samples
-    samples = model.sample(nSamples,nCycles,layer=0)
+    samples = model.sample(nSamples,nCycles)
     model.measure(samples,measurementFileName)
 
 if __name__ == '__main__':

@@ -3,8 +3,10 @@
 # Alan Morningstar
 # March 2017
 
+
 import drbn
 import sys
+
 
 # inputs
 args = sys.argv[1:]
@@ -38,21 +40,17 @@ k  = 10
 kPT = 10
 # batch size
 bS = 100
-# L1 regularization rate
-l1R = 0.0
 # method
 method = 'CDk'
 methodPT = 'CDk'
 # sampling parameters
 nSamples = 10000
 nCycles = 1000
-# dimension of lattice
-dim = 2
 
 # main training function
 def main():
-    # initialize deep Boltzmann machine
-    model = drbn.drbn(net,T,lR,k,bS,nE,l1R,dim)
+    # initialize drbn
+    model = drbn.drbn(net,T,lR,k,bS,nE,roll=True)
 
     # load data
     model.loadData(dataFileName)
@@ -60,10 +58,10 @@ def main():
     # pre-train with dbn
     model.preTrain(lRPT,kPT,nEPT,methodPT)
 
-    # train dbm
+    # train drbn
     model.train(method)
 
-    # measurements on dbm samples
+    # measurements on drbn samples
     sampleVisibles = model.sample(nSamples,nCycles)
     model.measure(sampleVisibles,measurementFileName)
 

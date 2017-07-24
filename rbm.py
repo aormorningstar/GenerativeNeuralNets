@@ -1,7 +1,8 @@
 # rbm.py
-# NOTE: this is a copy of the deep Boltzmann machine code for use in pre-training
+# some of this code was copied from dbm.py
 # Alan Morningstar
 # March 2017
+
 
 import numpy as np
 import pandas as pd
@@ -9,106 +10,77 @@ import copy
 from dgm import dgm
 from utils import neuron
 
-# a deep boltzmann machine built upon the deep generative model
+
+# a restricted Boltzmann machine built upon the deep generative model constrained to have one hidden layer
 class rbm(dgm):
-    # initialize dbm
-    def __init__(self,net,T,lR,k,bS,nE,l1R=0.0,d=2,roll=False):
+
+    # initialize rbm
+    def __init__(self,net,T,lR,k,bS,nE,roll=False):
+
         # initialize deep generative model framework
-        dgm.__init__(self,net,T,lR,k,bS,nE,l1R,d,roll)
+        dgm.__init__(self,net,T,lR,k,bS,nE,roll)
 
-        # number of Markov steps till convergence of dbm state given data (todo: auto determine this)
-        # this is 0 for rbm
+        # nS is not relevant for a single-hidden-layer network, set to 0
         self.nS = 0
+        # rbm network has one hidden layer
+        self.nL = 2
+        self.nHL = 1
 
-    # infer odd hidden layers from even layers
-    def inferOddHiddens(self,state):
-        # run over all odd hidden layers
-        for i in range(1,self.nL,2):
-            # do differently if top layer
-            if i == self.nL-1:
-                state[i] = neuron( np.dot(state[i-1],self.w[i-1]) + self.b[i] )
-            else:
-                state[i] = neuron( np.dot(state[i-1],self.w[i-1]) + np.dot(state[i+1],self.w[i].transpose()) + self.b[i] )
 
-    # infer even hidden layers from odd layers
-    def inferEvenHiddens(self,state):
-        # run over all even hidden layers
-        for i in range(2,self.nL,2):
-            # do differently if top layer
-            if i == self.nL-1:
-                state[i] = neuron( np.dot(state[i-1],self.w[i-1]) + self.b[i] )
-            else:
-                state[i] = neuron( np.dot(state[i-1],self.w[i-1]) + np.dot(state[i+1],self.w[i].transpose()) + self.b[i] )
+    # infer state of hidden layer
+    def inferHiddens(self,state):
+        state[1] = neuron( np.dot(state[0],self.w[0]) + self.b[1] )
 
-    # infer visible layer from 1st hidden layer
+
+    # infer state of visible layer
     def inferVisibles(self,state):
         state[0] = neuron( np.dot(state[1],self.w[0].transpose()) + self.b[0] )
 
-    # initialize hiddens approximately with a bottom up pass
-    def initializeHiddens(self,state):
-        # run over hidden layers except top one
-        for i in range(1,self.nHL):
-            # initialize this layer by doubling the input from the layer below and ignoring layer above
-            state[i] = neuron( 2*np.dot(state[i-1],self.w[i-1]) + self.b[i] )
-        # initialize top layer
-        state[self.nHL] = neuron( np.dot(state[self.nHL-1],self.w[self.nHL-1]) + self.b[self.nHL] )
 
     # persistent contrastive divergence training step
     def pCD(self):
+
         # clamp visibles to batch of training data
         self.dgmState[0] = self.batch
-        # bottom up pass to initialize hidden units approximately
-        self.initializeHiddens(self.dgmState)
-
-        # run Markov chain to equilibrate dbm with clamped visibles
-        self.inferOddHiddens(self.dgmState)
-        for i in range(self.nS):
-            self.inferEvenHiddens(self.dgmState)
-            self.inferOddHiddens(self.dgmState)
+        # bottom up pass to initialize hidden units
+        self.inferHiddens(self.dgmState)
 
         # run persistent chain to update
         for i in range(self.k):
-            self.inferEvenHiddens(self.pC)
             self.inferVisibles(self.pC)
-            self.inferOddHiddens(self.pC)
+            self.inferHiddens(self.pC)
 
         # update weights
-        for i in range(self.nHL):
-            self.w[i] += (self.lR/self.bS) * (np.dot(self.dgmState[i].transpose(),self.dgmState[i+1]) - np.dot(self.pC[i].transpose(),self.pC[i+1]))
+        self.w[0] += (self.lR/self.bS) * (np.dot(self.dgmState[0].transpose(),self.dgmState[1]) - np.dot(self.pC[0].transpose(),self.pC[1]))
 
         # update biases
         for i in range(self.nL):
             self.b[i] += (self.lR/self.bS) * np.sum(self.dgmState[i]-self.pC[i],axis=0)
+
 
     # contrastive divergence training step
     def CDk(self):
+
         # clamp visibles to batch of training data
         self.dgmState[0] = self.batch
-        # bottom up pass to initialize hidden units approximately
-        if self.nHL > 1:
-            self.initializeHiddens(self.dgmState)
-
-        # run Markov chain to equilibrate dbm with clamped visibles
-        self.inferOddHiddens(self.dgmState)
-        for i in range(self.nS):
-            self.inferEvenHiddens(self.dgmState)
-            self.inferOddHiddens(self.dgmState)
+        # bottom up pass to initialize hidden units
+        self.inferHiddens(self.dgmState)
 
         # set persistent chain to dbm state
         self.pC = copy.deepcopy(self.dgmState)
+
         # run k Gibbs updates
         for i in range(self.k):
-            self.inferEvenHiddens(self.pC)
             self.inferVisibles(self.pC)
-            self.inferOddHiddens(self.pC)
+            self.inferHiddens(self.pC)
 
         # update weights
-        for i in range(self.nHL):
-            self.w[i] += (self.lR/self.bS) * (np.dot(self.dgmState[i].transpose(),self.dgmState[i+1]) - np.dot(self.pC[i].transpose(),self.pC[i+1]))
+        self.w[0] += (self.lR/self.bS) * (np.dot(self.dgmState[0].transpose(),self.dgmState[1]) - np.dot(self.pC[0].transpose(),self.pC[1]))
 
         # update biases
         for i in range(self.nL):
             self.b[i] += (self.lR/self.bS) * np.sum(self.dgmState[i]-self.pC[i],axis=0)
+
 
     # train all parameters together
     def train(self,method):
@@ -123,7 +95,7 @@ class rbm(dgm):
         if method == 'pCD':
             randomIndices = np.random.choice(self.nTS,self.bS,replace=False)
             self.pC[0] = copy.deepcopy(self.data[randomIndices,:])
-            self.initializeHiddens(self.pC)
+            self.inferHiddens(self.pC)
 
         # run over epochs
         for e in range(self.nE):
@@ -142,9 +114,6 @@ class rbm(dgm):
                     self.pCD()
                 elif method == 'CDk':
                     self.CDk()
-                # regularization
-                if self.l1R:
-                    self.L1()
 
                 # decrease learning rate
                 self.lR -= deltaLR
@@ -152,40 +121,38 @@ class rbm(dgm):
         # reset learning rate
         self.lR = lRInit
 
+
     # generate samples
-    def sample(self,nSamples,nCycles,layer = 0):
+    def sample(self,nSamples,nCycles):
+
         print('----------------------------------')
         print('Sampling dbm...')
-        # initialize state of sample dbm
-        sampleDgm = [np.random.randint(0,2,(nSamples,self.net[i])) for i in range(self.nL)]
+
+        # initialize state of sample rbm
+        sampleRbm = [np.random.randint(0,2,(nSamples,self.net[i])) for i in range(self.nL)]
 
         # run Markov chain to generate equilibrium samples
         for i in range(nCycles):
-            self.inferOddHiddens(sampleDgm)
-            self.inferEvenHiddens(sampleDgm)
+            self.inferHiddens(sampleDgm)
             self.inferVisibles(sampleDgm)
 
         # return equilibrium samples
-        return sampleDgm[layer]
+        return sampleDgm[0]
+
 
     # compress data
     def compressedData(self):
+
         print('----------------------------------')
         print('Compressing data...')
+
         # data container for all layers of the network
         state = [np.empty((self.nTS,self.net[i]),dtype=int) for i in range(self.nL)]
 
         # clamp to data
         state[0] = self.data
-        # approx initialize hidden layers
-        if self.nHL > 1:
-            self.initializeHiddens(state)
-        # equilibrate hidden layers
-        nCycles = 10*self.nS
-        self.inferOddHiddens(state)
-        for i in range(nCycles):
-            self.inferEvenHiddens(state)
-            self.inferOddHiddens(state)
+        # forward pass to infer hidden data
+        inferHiddens(state)
 
-        # return top hidden state equilibrated to data
-        return state[-1]
+        # return hidden state
+        return state[1]

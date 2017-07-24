@@ -3,29 +3,35 @@
 # Alan Morningstar
 # March 2017
 
+
 import numpy as np
 import pandas as pd
 import copy
 from dgm import dgm
-from dbn import dbn
+from dbn import dbn # for pre-training
 from utils import neuron
+
 
 # a deep boltzmann machine built upon the deep generative model
 class dbm(dgm):
+
     # initialize dbm
-    def __init__(self,net,T,lR,nS,k,bS,nE,l1R=0.0,d=2,roll=False):
+    def __init__(self,net,T,lR,nS,k,bS,nE,roll=False):
+
         # initialize deep generative model framework
-        dgm.__init__(self,net,T,lR,k,bS,nE,l1R,d,roll)
+        dgm.__init__(self,net,T,lR,k,bS,nE,roll)
 
         # number of Markov steps till convergence of dbm state given data (todo: auto determine this)
         self.nS = nS
         if len(self.net) == 2:
             self.nS = 0
 
-    # pre-train using a deep belief network (note ideal pre-training)
+
+    # pre-train using a deep belief network (not ideal pre-training)
     def preTrain(self,lR,k,nE,method):
+
         # initialize deep belief network
-        preModel = dbn(self.net,self.T,lR,k,self.bS,nE,self.l1R,self.d,self.roll)
+        preModel = dbn(self.net,self.T,lR,k,self.bS,nE,self.roll)
         # load data
         preModel.loadData(self.data)
         # train dbn
@@ -36,8 +42,10 @@ class dbm(dgm):
         for i in range(self.nL):
             self.b[i] = 0.5*(copy.deepcopy(preModel.b[i])+copy.deepcopy(preModel.bR[i]))
 
+
     # infer odd hidden layers from even layers
     def inferOddHiddens(self,state):
+
         # run over all odd hidden layers
         for i in range(1,self.nL,2):
             # do differently if top layer
@@ -46,8 +54,10 @@ class dbm(dgm):
             else:
                 state[i] = neuron( np.dot(state[i-1],self.w[i-1]) + np.dot(state[i+1],self.w[i].transpose()) + self.b[i] )
 
+
     # infer even hidden layers from odd layers
     def inferEvenHiddens(self,state):
+
         # run over all even hidden layers
         for i in range(2,self.nL,2):
             # do differently if top layer
@@ -56,21 +66,27 @@ class dbm(dgm):
             else:
                 state[i] = neuron( np.dot(state[i-1],self.w[i-1]) + np.dot(state[i+1],self.w[i].transpose()) + self.b[i] )
 
+
     # infer visible layer from 1st hidden layer
     def inferVisibles(self,state):
         state[0] = neuron( np.dot(state[1],self.w[0].transpose()) + self.b[0] )
 
+
     # initialize hiddens approximately with a bottom up pass
     def initializeHiddens(self,state):
+
         # run over hidden layers except top one
         for i in range(1,self.nHL):
             # initialize this layer by doubling the input from the layer below and ignoring layer above
             state[i] = neuron( 2*np.dot(state[i-1],self.w[i-1]) + self.b[i] )
+
         # initialize top layer
         state[self.nHL] = neuron( np.dot(state[self.nHL-1],self.w[self.nHL-1]) + self.b[self.nHL] )
 
+
     # persistent contrastive divergence training step
     def pCD(self):
+
         # clamp visibles to batch of training data
         self.dgmState[0] = self.batch
         # bottom up pass to initialize hidden units approximately
@@ -96,8 +112,10 @@ class dbm(dgm):
         for i in range(self.nL):
             self.b[i] += (self.lR/self.bS) * np.sum(self.dgmState[i]-self.pC[i],axis=0)
 
+
     # contrastive divergence training step
     def CDk(self):
+
         # clamp visibles to batch of training data
         self.dgmState[0] = self.batch
         # bottom up pass to initialize hidden units approximately
@@ -125,6 +143,7 @@ class dbm(dgm):
         # update biases
         for i in range(self.nL):
             self.b[i] += (self.lR/self.bS) * np.sum(self.dgmState[i]-self.pC[i],axis=0)
+
 
     # train all parameters together
     def train(self,method):
@@ -158,9 +177,6 @@ class dbm(dgm):
                     self.pCD()
                 elif method == 'CDk':
                     self.CDk()
-                # regularization
-                if self.l1R:
-                    self.L1()
 
                 # decrease learning rate
                 self.lR -= deltaLR
@@ -168,8 +184,10 @@ class dbm(dgm):
         # reset learning rate
         self.lR = lRInit
 
+
     # generate samples
-    def sample(self,nSamples,nCycles,layer = 0):
+    def sample(self,nSamples,nCycles):
+
         print('----------------------------------')
         print('Sampling dbm...')
         # initialize state of sample dbm
@@ -182,20 +200,25 @@ class dbm(dgm):
             self.inferVisibles(sampleDgm)
 
         # return equilibrium samples
-        return sampleDgm[layer]
+        return sampleDgm[0]
+
 
     # compress data
     def compressedData(self):
+
         print('----------------------------------')
         print('Compressing data...')
+
         # data container for all layers of the network
         state = [np.empty((self.nTS,self.net[i]),dtype=int) for i in range(self.nL)]
 
         # clamp to data
         state[0] = self.data
+
         # approx initialize hidden layers
         if self.nHL > 1:
             self.initializeHiddens(state)
+
         # equilibrate hidden layers
         nCycles = 10*self.nS
         self.inferOddHiddens(state)
