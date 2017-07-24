@@ -133,11 +133,11 @@ class rbm(dgm):
 
         # run Markov chain to generate equilibrium samples
         for i in range(nCycles):
-            self.inferHiddens(sampleDgm)
-            self.inferVisibles(sampleDgm)
+            self.inferHiddens(sampleRbm)
+            self.inferVisibles(sampleRbm)
 
         # return equilibrium samples
-        return sampleDgm[0]
+        return sampleRbm[0]
 
 
     # compress data
@@ -152,7 +152,7 @@ class rbm(dgm):
         # clamp to data
         state[0] = self.data
         # forward pass to infer hidden data
-        inferHiddens(state)
+        self.inferHiddens(state)
 
         # return hidden state
         return state[1]

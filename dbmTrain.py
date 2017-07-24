@@ -53,7 +53,7 @@ nCycles = 1000
 # main training function
 def main():
     # initialize model
-    model = dbm(net,T,lR,nS,k,bS,nE,l1R,dim,roll=True)
+    model = dbm(net,T,lR,nS,k,bS,nE,roll=True)
 
     # load data
     model.loadData(dataFileName)

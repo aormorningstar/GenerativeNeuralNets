@@ -30,9 +30,9 @@ measurementFileName = 'meas' + nameBase + '.csv'
 sampFileName = None
 
 # training parameters
-lR = 0.001
-nE = 100
-k = 5
+lR = 0.01
+nE = 500
+k = 2
 bS = 100 # batch size
 method = "CDk" # training method
 
@@ -49,7 +49,7 @@ def main():
     model.loadData(dataFileName)
 
     # train model
-    model.train()
+    model.train(method)
 
     # generate samples and measure, write to file
     samples = model.sample(numSamples,numCycles)

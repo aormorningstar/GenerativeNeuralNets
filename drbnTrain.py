@@ -33,11 +33,11 @@ sampFileName = None
 lR = 0.0002
 lRPT = 0.002
 # number of epochs
-nE = 4000
-nEPT = 4000
+nE = 20
+nEPT = 20
 # k value for CDk or pCD
-k  = 10
-kPT = 10
+k  = 5
+kPT = 5
 # batch size
 bS = 100
 # method
