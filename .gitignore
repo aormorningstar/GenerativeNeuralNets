@@ -1,3 +1,6 @@
 __pycache__/
-*.csv
+data/
+plots/
+analysis/
 *.sh
+*Train*
